@@ -1,0 +1,68 @@
+## Syntax highlighting for Python.
+
+################ ORIGINAL COPYRIGHT NOTICE #################################
+##
+##    This program is free software: you can redistribute it and/or modify
+##    it under the terms of the GNU General Public License as published by
+##    the Free Software Foundation, either version 3 of the License, or
+##    (at your option) any later version.
+##
+##    This program is distributed in the hope that it will be useful,
+##    but WITHOUT ANY WARRANTY; without even the implied warranty of
+##    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+##    GNU General Public License for more details.
+##
+##    You should have received a copy of the GNU General Public License
+##    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+##
+############################################################################
+
+syntax python "\.py$"
+header "^#!.*python"
+magic "Python script"
+comment "#"
+
+linter pyflakes
+
+# Function definitions.
+color brightblue "def [0-9A-Za-z_]+"
+# Keywords.
+color brightcyan "\<(and|as|assert|async|await|break|class|continue)\>"
+color brightcyan "\<(def|del|elif|else|except|finally|for|from)\>"
+color brightcyan "\<(global|if|import|in|is|lambda|nonlocal|not|or)\>"
+color brightcyan "\<(pass|raise|return|try|while|with|yield)\>"
+
+# These two are keywords in Python 2, but functions in Python 3,
+# so only color them when they are followed by whitespace, assuming
+# that print(x) is a function invocation and print (x) is a statement.
+color brightcyan "\<(exec|print)([[:blank:]]|$)"
+
+# Special values.
+color brightmagenta "\<(False|None|True)\>"
+color magenta "\<(memoryview)\>"
+
+# Mono-quoted strings.
+color orange "'([^'\]|\\.)*'|"([^"\]|\\.)*"|'''|""""
+color orange "'''|""""
+# Comments.
+color brightred "(^|[[:blank:]])#.*"
+# Triple-quoted strings.
+color orange start="'''([^'),]|$)" end="(^|[^(\])'''"
+color orange start=""""([^"),]|$)" end="(^|[^(\])""""
+
+# Backslash escapes.
+color lime "\\($|[\'"abfnrtv]|[0-3]?[0-7]?[0-7]|x[[:xdigit:]]{2})"
+color lime "\\(N\{[[:alpha:]]+\}|u[[:xdigit:]]{4}|U[[:xdigit:]]{8})"
+
+# Reminders.
+color brightwhite,yellow "\<(FIXME|TODO|XXX)\>"
+
+# Trailing whitespace.
+color ,green "[[:space:]]+$"
+
+## NUMBERS
+## XXX: to be fixed as possible, part of the problem is due to
+##      file parsing and the way regexes are applied.
+##      Wrong matches: '0.1.2', '1e3.3', '0xAA3.4', '0xFF.3', '0b00.1'
+## int/float/exadecimal/binary
+color magenta "\b((((0|[1-9]|[1-9][0-9_]*[0-9])(\.([0-9]|[0-9_]*[0-9]))?)|(0x[0-9a-fA-F]([0-9a-fA-F_]*[0-9a-fA-F])?))(e[0-9_]*[0-9])?|(0b[01]([01_]*[01])?))([uU]|[lL]|[fF]|[uU][lL]|[lL][uU]|[uU][fF]|[lL][fF]|[fF][uU]|[fF][lL]|[ufl]|[uU][fF][lL]|[uU][lL][fF]|[fF][uU][lL]|[fF][lL][uU]|[lL][uU][fF]|[lL][fF][uU])?\b"
