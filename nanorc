@@ -166,7 +166,8 @@ set regexp
 # set speller "aspell -x -c"
 
 ## Allow nano to be suspended.
-set suspend
+# old: set suspend
+# old (ignored on new versions): set suspendable
 
 ## Use this tab size instead of the default; it must be greater than 0.
 set tabsize 4
@@ -280,7 +281,7 @@ include "/usr/share/nano/css.nanorc"
 include "/usr/share/nano/debian.nanorc"
 
 ## Gentoo files
-include "/usr/share/nano/gentoo.nanorc"
+#include "/usr/share/nano/gentoo.nanorc"
 
 ## HTML
 include "/usr/share/nano/html.nanorc"
@@ -295,7 +296,7 @@ include "/usr/share/nano/tcl.nanorc"
 include "/usr/share/nano/tex.nanorc"
 
 ## Quoted emails (under e.g. mutt)
-include "/usr/share/nano/mutt.nanorc"
+#include "/usr/share/nano/mutt.nanorc"
 
 ## Patch files
 include "/usr/share/nano/patch.nanorc"
@@ -331,7 +332,7 @@ include "/usr/share/nano/asm.nanorc"
 include "/usr/share/nano/sh.nanorc"
 
 ## POV-Ray
-include "/usr/share/nano/pov.nanorc"
+#include "/usr/share/nano/pov.nanorc"
 
 ## XML-type files
 include "/usr/share/nano/xml.nanorc"
