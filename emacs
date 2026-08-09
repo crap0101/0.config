@@ -17,17 +17,29 @@
 ;;
 ;; author: Marco Chieppa | crap0101 ...with some help from Custom :D
 
-;; load vibuf ;;
-(add-to-list 'load-path "/home/crap0101/local/share/emacs")
+
+;;;;;;;;;;;;;;;;;
+;; init stuffs ;;
+;;;;;;;;;;;;;;;;;
+
+;; system type
+(defvar gnu+linux (string-equal system-type "gnu/linux"))
+(defvar syswin (string-equal system-type "windows-nt"))
+
+;; vibuf: load
+(when gnu+linux
+  (add-to-list 'load-path "/home/crap0101/local/share/emacs"))
+(when syswin
+  (add-to-list 'load-path "c:/Users/c24p0/AppData/Roaming/.emacs.d/lisp"))
 (require 'vibuf)
-; add hooks
+;; vibuf: add hooks
 (add-hook 'find-file-hook 'vibuf-create-buffer-hook-function)
 (add-hook 'kill-buffer-hook 'vibuf-kill-buffer-hook-function)
 (add-hook 'emacs-startup-hook 'vibuf-set__buffer-list-default)
 (add-hook 'emacs-startup-hook (lambda () (vibuf-set__excluded-names vibuf__excluded-names)))
-; set some vars
+;; vibuf: set some vars
 (vibuf-set__buffer-name-if-empty "*scratch*")
-; ...and set key bindings
+;; vibuf: set key bindings
 (global-set-key (kbd "C-S-<left>") (lambda () (interactive) (vibuf-prev-buffer)))
 (global-set-key (kbd "C-S-<right>") (lambda () (interactive) (vibuf-next-buffer)))
 
@@ -41,12 +53,16 @@
   (server-start)
   (message (format "server started (%s)" (server-running-p))))
 
+;; recentf
+(require 'recentf)
+(recentf-mode 1)
+(add-hook 'buffer-list-update-hook 'recentf-track-opened-file)
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; custom functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
-; custom goto-line
+;; custom goto-line
 (defun go-line (num)
   "go to the *num*th line of the current buffer.
 NOTE: If *num* is lesser than 1 or negative, counts from the
@@ -62,14 +78,30 @@ buffer's lines, go to the last line."
             (forward-line (+ (- lines actual-line) num))
           (forward-line (- num actual-line)))))))
 
-; copy-line shortcut
+;; copy-line shortcut
 (defun copy-lines (&optional arg)
   "Copy *arg* lines in the kill ring (default: the current line)."
   (interactive "p")
   (kill-ring-save (line-beginning-position)
 		  (line-beginning-position (+ 1 (if arg arg 1)))))
 
-; search by region
+(defun uppercase-word (&optional n)
+  "upcase the ENTIRE *n* words (default 1) from the point."
+  (interactive "P")
+  (backward-to-word)
+  (upcase-word (if n n 1))
+  (forward-word)
+  (backward-word))
+
+(defun lowercase-word (&optional n)
+  "lowcase the ENTIRE *n* words (default 1) from the point."
+  (interactive "P")  
+  (backward-to-word)
+  (downcase-word (if n n 1))
+  (forward-word)
+  (backward-word))
+
+;; search by region
 (defun search-region (start end)
   "Starts a search using the region of the current buffer."
   (interactive "r")  
@@ -77,13 +109,43 @@ buffer's lines, go to the last line."
   (deactivate-mark)
   (isearch-yank-string (buffer-substring-no-properties start end)))
 
-; insert date
+;; uppercase region
+(defun uppercase-region (start end)
+  "uppercase the region of the current buffer."
+  (interactive "r")  
+  (deactivate-mark)
+  (upcase-region start end))
+
+;; downcase region
+(defun lowercase-region (start end)
+  "lowercase the region of the current buffer."
+  (interactive "r")  
+  (deactivate-mark)
+  (downcase-region start end))
+
+;; capitalize region
+(defun cap-region (start end)
+  "capitalize the region of the current buffer."
+  (interactive "r")  
+  (deactivate-mark)
+  (capitalize-region start end))
+
+;; open file from region
+(defun open-file-from-region (start end)
+  "open the filename from the region of the current buffer"
+  (interactive "r")
+  (deactivate-mark)
+  (switch-to-buffer
+    (find-file-noselect
+      (buffer-substring-no-properties start end)  nil nil nil)))
+
+;; insert date
 (defun insert-date (prefix)
-    "Insert the current date."
+    "Insert the current date in the YYYY-MM-DD format."
     (interactive "P")
     (insert (format-time-string "%Y-%m-%d")))
 
-; run python program
+;; run python program
 (defun run-python-program (&optional python-name)
   "Run the python programs in the current buffer"
   (interactive)
@@ -99,12 +161,12 @@ buffer's lines, go to the last line."
 		(symbol-name
 		 (save-excursion (current-buffer) major-mode)) ")")))))
 
-; run python program (choose executable)
+;; run python program (choose executable)
 (defun run-pythonXY-program (python-name)
   (interactive "sPython name: ")
   (run-python-program python-name))
 
-; number to subscript (O2 -> O₂)
+;; number to subscript (O2 -> O₂)
 (defun number-to-subscript ()
   (let* ((cursor-info (what-cursor-position))
 	 (ival (progn (string-match "(\\([0-9]+\\)" cursor-info)
@@ -122,46 +184,72 @@ buffer's lines, go to the last line."
 ;; redefine this
 (global-set-key "\C-xw" 'other-window)
 
-;; others simple bindings
-(global-set-key "\C-c\C-r" (lambda () (interactive)
-			     (progn (revert-buffer nil t) (message "%s" "buffer reverted"))))
-;; for previously defined functions
+;; revert buffer
+(global-set-key [f1] (lambda () (interactive)
+		       (progn (revert-buffer nil t t) (message "%s" "buffer reverted"))))
+;(global-set-key "\C-c\C-r" (lambda () (interactive)
+;			     (progn (revert-buffer nil t t) (message "%s" "buffer reverted"))))
+
+;; for previously defined functions:
 (global-set-key "\C-cg" 'go-line)
 (global-set-key "\C-c\C-c" 'copy-lines)
+;; C-c C-c for copy the current line
+;; C-u N C-c C-c to copy N lines
 (global-set-key (kbd "C-S-s") 'search-region)
+(global-set-key (kbd "C-c C-f") 'open-file-from-region)
 (global-set-key (kbd "C-c d") 'insert-date)
+(global-set-key (kbd "C-c u") 'uppercase-region)
+(global-set-key (kbd "C-c l") 'lowercase-region)
+(global-set-key (kbd "C-c c") 'cap-region)
+(global-set-key (kbd "M-u") 'uppercase-word)
+(global-set-key (kbd "M-l") 'lowercase-word)
+;(when syswin ;; for some reason my laptop doesn't like M-u as much as M-l
+;  (global-set-key (kbd "M-u") 'upcase-word)) ;; fuck M-U
 (global-set-key (kbd "M-s") (lambda () (interactive) (number-to-subscript)))
 (global-set-key [f2] 'run-python-program)
 (global-set-key [f3] 'run-pythonXY-program)
-; change font size with C-[MouseWheelUpOrDown]
+
+;; change font size with C-[MouseWheelUpOrDown]
 (global-set-key (kbd "<C-mouse-4>") (lambda () (interactive) (text-scale-decrease 1)))
 (global-set-key (kbd "<C-mouse-5>") (lambda () (interactive) (text-scale-increase 1)))
-(add-hook 'python-mode-hook
-	  (lambda ()
-            (local-set-key (kbd "C-c C-SPC") 'comment-or-uncomment-region)))
+
+;; python mode comment/uncomment
+(global-set-key (kbd "C-c C-SPC") 'comment-or-uncomment-region)
+;; (add-hook 'python-mode-hook
+;; 	  (lambda ()
+;;             (local-set-key (kbd "C-c C-SPC") 'comment-or-uncomment-region)))
 
 
-;;;;;;;;;;;;;;;;;;;;;;
-;; custom variables ;;
-;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+;; set some variables ;;
+;;;;;;;;;;;;;;;;;;;;;;;;
 
-; http://lists.gnu.org/archive/html/emacs-devel/2011-09/msg00350.html
-(setq redisplay-dont-pause t)
+;; http://lists.gnu.org/archive/html/emacs-devel/2011-09/msg00350.html
+(setq-default redisplay-dont-pause t)
+
 ;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2010-11/msg00243.html
-(setq focus-follows-mouse nil)
-; keep the cursor at the same screen position whenever a scroll command moves it off-window
-(setq scroll-preserve-screen-position t)
-; browser
-(setq browse-url-browser-function 'browse-url-firefox
-      browse-url-firefox-program "firefox")
-; no beep
-(setq visible-bell t)
-; text related
-(setq indent-tabs-mode nil
-      tab-width 4
-      term-input-autoexpand t
-      x-select-enable-clipboard t)
-; columns and rows
+(setq-default focus-follows-mouse nil)
+
+;; keep the cursor at the same screen position whenever a scroll command moves it off-window
+(setq-default scroll-preserve-screen-position t)
+
+;; browser
+(setq-default browse-url-browser-function 'browse-url-firefox
+	      browse-url-firefox-program "firefox-esr")
+
+;; no beep
+(setq-default visible-bell t)
+
+;; text related
+(setq-default indent-tabs-mode nil
+	      tab-width 4
+	      term-input-autoexpand t
+	      x-select-enable-clipboard t)
+; for C-q
+(setq-default fill-column 165)
+(setq-default sentence-end-double-space nil)
+
+;; columns and rows
 (line-number-mode t)
 (column-number-mode t)
 
@@ -170,8 +258,8 @@ buffer's lines, go to the last line."
 ;; set color, faces and similar stuffs ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; (set-background-color "#000000") ;"#333333")
-; (set-foreground-color "#33CC00")
+;; (set-background-color "#000000") ;"#333333")
+;; (set-foreground-color "#33CC00")
 (set-face-attribute 'default t
                     :stipple nil
                     :inverse-video nil
@@ -181,26 +269,22 @@ buffer's lines, go to the last line."
                     :underline nil
                     :slant 'normal
                     :weight 'normal
-                    :height 120
+                    :height 140
                     :width 'normal
                     :family "DejaVu Sans Mono")
 (set-face-attribute 'region nil :background "#666666")
 (set-frame-font "DejaVu Sans Mono 15")
 
-
-;; erc ;;
-;(require 'erc-join)
-;(erc-autojoin-mode 1)
-(setq erc-modules '(autojoin button completion dcc fill irccontrols
-                             list match menu move-to-prompt netsplit
-                             networks noncommands readonly ring stamp track)
-      erc-autojoin-channels-alist '(("freenode.net" "#hackerforum" "#init1" "#linux-libre"))
-      erc-away-nickname nil
-      erc-prompt-for-channel-key nil
-      erc-public-away-p nil
-      erc-user-full-name "Marco Chieppa | http://crap0101.altervista.org/"
-      erc-auto-discard-away t
-      erc-autoaway-idle-seconds 900)
+;; diff colors
+(defun update-diff-colors ()
+  "update the colors for diff faces"
+  (set-face-attribute 'diff-added nil
+                      :background "green")
+  (set-face-attribute 'diff-removed nil
+                      :background "red")
+  (set-face-attribute 'diff-changed nil
+                      :background "blue"))
+(eval-after-load "diff-mode" '(update-diff-colors))
 
 ;; rust ;;
 ;;(add-to-list 'load-path "/home/crap0101/.emacs.d/rust")
