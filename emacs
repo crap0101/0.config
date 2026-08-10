@@ -88,18 +88,18 @@ buffer's lines, go to the last line."
 (defun uppercase-word (&optional n)
   "upcase the ENTIRE *n* words (default 1) from the point."
   (interactive "P")
-  (backward-to-word)
-  (upcase-word (if n n 1))
-  (forward-word)
-  (backward-word))
+  (if (eq 0 (syntax-class (syntax-after (point))))
+      (forward-to-word) 
+    (backward-word))
+  (upcase-word (if n n 1)))
 
 (defun lowercase-word (&optional n)
   "lowcase the ENTIRE *n* words (default 1) from the point."
-  (interactive "P")  
-  (backward-to-word)
-  (downcase-word (if n n 1))
-  (forward-word)
-  (backward-word))
+  (interactive "P")
+  (if (eq 0 (syntax-class (syntax-after (point))))
+      (forward-to-word) 
+    (backward-word))
+  (downcase-word (if n n 1)))
 
 ;; search by region
 (defun search-region (start end)
