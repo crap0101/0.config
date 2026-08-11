@@ -71,9 +71,12 @@
                            (display-fill-column-indicator-mode 1)
                            (visual-line-mode 1)
                            (visual-wrap-prefix-mode 1)
+                           ;;
+                           (org-indent-mode 1)
+                           ;(setq org-element-use-cache nil)
                            (setq org-latex-compiler "latexmk")
                            (setq org-latex-pdf-process
-                                 '("%latex -pdf -output-directory=%o"))))
+                                 '("%latex -pdfxe -output-directory=%o"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; custom functions ;;
