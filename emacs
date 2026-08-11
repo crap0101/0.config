@@ -26,6 +26,23 @@
 (defvar gnu+linux (string-equal system-type "gnu/linux"))
 (defvar syswin (string-equal system-type "windows-nt"))
 
+;; more debugging
+(toggle-debug-on-error)
+
+;; maximize window
+(setq initial-frame-alist '((fullscreen . maximized)))
+
+;; set & start emacs server
+(require 'server)
+;;(setq server-name "emacs-server-main")
+(unless (server-running-p)
+  (server-start)
+  (message (format "server started (%s)" (server-running-p))))
+
+;;;;;;;;;;;;;;;;;;;
+;; load packages ;;
+;;;;;;;;;;;;;;;;;;;
+
 ;; vibuf: load
 (when gnu+linux
   (add-to-list 'load-path "/home/crap0101/local/share/emacs"))
@@ -43,20 +60,20 @@
 (global-set-key (kbd "C-S-<left>") (lambda () (interactive) (vibuf-prev-buffer)))
 (global-set-key (kbd "C-S-<right>") (lambda () (interactive) (vibuf-next-buffer)))
 
-;; maximize window
-(setq initial-frame-alist '((fullscreen . maximized)))
-
-;; set & start emacs server
-(require 'server)
-;;(setq server-name "emacs-server-main")
-(unless (server-running-p)
-  (server-start)
-  (message (format "server started (%s)" (server-running-p))))
-
 ;; recentf
 (require 'recentf)
 (recentf-mode 1)
 (add-hook 'buffer-list-update-hook 'recentf-track-opened-file)
+
+;; org-mode
+(add-hook 'org-mode-hook (lambda ()
+                           (setq display-fill-column-indicator-column 80)
+                           (display-fill-column-indicator-mode 1)
+                           (visual-line-mode 1)
+                           (visual-wrap-prefix-mode 1)
+                           (setq org-latex-compiler "latexmk")
+                           (setq org-latex-pdf-process
+                                 '("%latex -pdf -output-directory=%o"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; custom functions ;;
@@ -289,3 +306,4 @@ buffer's lines, go to the last line."
 ;; rust ;;
 ;;(add-to-list 'load-path "/home/crap0101/.emacs.d/rust")
 ;;(require 'rust-mode)
+
