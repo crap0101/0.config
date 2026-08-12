@@ -213,8 +213,10 @@ buffer's lines, go to the last line."
 ;; bindings ;;
 ;;;;;;;;;;;;;;
 
-;; redefine this
-(global-set-key "\C-xw" 'other-window)
+;; redefine this: change focus forward
+(global-set-key (kbd "C-c w") 'other-window)
+;; change focus backward
+(global-set-key (kbd "C-c q") (lambda () (interactive) (other-window -1)))
 
 ;; revert buffer
 (global-set-key [f1] (lambda () (interactive)
