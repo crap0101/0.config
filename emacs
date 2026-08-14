@@ -133,13 +133,27 @@ buffer's lines, go to the last line."
       (forward-to-word))
     (downcase-word (if n n 1))))
 
-;; search by region
+;; search by region, case-sensitive
 (defun search-region (start end)
   "Starts a search using the region of the current buffer."
-  (interactive "r")  
+  (interactive "r")
+  (setq search-region__previous_cs case-fold-search)
+  (setq case-fold-search nil)
   (isearch-mode t nil nil nil)
   (deactivate-mark)
-  (isearch-yank-string (buffer-substring-no-properties start end)))
+  (isearch-yank-string (buffer-substring-no-properties start end))
+  (setq case-fold-search search-region__previous_cs))
+
+;; search by region, case-insensitive
+(defun isearch-region (start end)
+  "Starts a search using the region of the current buffer."
+  (interactive "r")
+  (setq search-region__previous_cs case-fold-search)
+  (setq case-fold-search t)
+  (isearch-mode t nil nil nil)
+  (deactivate-mark)
+  (isearch-yank-string (buffer-substring-no-properties start end))
+  (setq case-fold-search search-region__previous_cs))
 
 ;; uppercase region
 (defun uppercase-region (start end)
@@ -229,7 +243,8 @@ buffer's lines, go to the last line."
 (global-set-key "\C-c\C-c" 'copy-lines)
 ;; C-c C-c for copy the current line
 ;; C-u N C-c C-c to copy N lines
-(global-set-key (kbd "C-S-s") 'search-region)
+(global-set-key (kbd "C-S-s") 'isearch-region)
+(global-set-key (kbd "C-c C-S") 'search-region)
 (global-set-key (kbd "C-c C-f") 'open-file-from-region)
 (global-set-key (kbd "C-c d") 'insert-date)
 (global-set-key (kbd "C-c u") 'uppercase-region)
