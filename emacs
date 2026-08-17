@@ -66,24 +66,23 @@
 (add-hook 'buffer-list-update-hook 'recentf-track-opened-file)
 
 ;; org-mode
-;(with-eval-after-load 'org
+;;(with-eval-after-load 'org
+;;(require 'org)
 (add-hook 'org-mode-hook (lambda ()
-                           (setq display-fill-column-indicator-column 80)
                            (setq fill-column 80)
-                           (setq auto-fill-mode 1)
+                           (setq display-fill-column-indicator-column t)
                            ;;;;;
                            (display-fill-column-indicator-mode 1)
-                           (setq truncate-lines nil)
-                           (setq word-wrap nil)
-                           (visual-line-mode 1)
-                           (visual-wrap-prefix-mode 1)
+
                            (org-indent-mode 1)
                            (setq org-latex-compiler "latexmk")
                            (setq org-latex-pdf-process
-                                 '("%latex -pdfxe -output-directory=%o"))))
-
+                                 '("%latex -pdfxe -output-directory=%o"))
+                           ;;(auto-fill-mode 1)
+                           (refill-mode 1)))
 
 (add-hook 'backtrace-mode-hook 'visual-line-mode)
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; custom functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;
