@@ -70,17 +70,15 @@
 ;;(require 'org)
 (add-hook 'org-mode-hook (lambda ()
                            (setq fill-column 80)
-                           (setq display-fill-column-indicator-column t)
-                           ;;;;;
                            (display-fill-column-indicator-mode 1)
-
+                           (refill-mode 1)
                            (org-indent-mode 1)
                            (setq org-latex-compiler "latexmk")
                            (setq org-latex-pdf-process
-                                 '("%latex -pdfxe -output-directory=%o"))
-                           ;;(auto-fill-mode 1)
-                           (refill-mode 1)))
+                                 '("%latex -pdfxe -output-directory=%o"))))
 
+
+;; backtrace view
 (add-hook 'backtrace-mode-hook 'visual-line-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;
