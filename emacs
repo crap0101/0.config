@@ -66,16 +66,15 @@
 (add-hook 'buffer-list-update-hook 'recentf-track-opened-file)
 
 ;; org-mode
-;;(with-eval-after-load 'org
-;;(require 'org)
-(add-hook 'org-mode-hook (lambda ()
-                           (setq fill-column 80)
-                           (display-fill-column-indicator-mode 1)
-                           (refill-mode 1)
-                           (org-indent-mode 1)
-                           (setq org-latex-compiler "latexmk")
-                           (setq org-latex-pdf-process
-                                 '("%latex -pdfxe -output-directory=%o"))))
+(add-hook 'org-mode-hook
+          (lambda ()
+            (setq fill-column 80)
+            (display-fill-column-indicator-mode 1)
+            (refill-mode 1)
+            (org-indent-mode 1)
+            (setq org-latex-compiler "latexmk")
+            (setq org-latex-pdf-process
+                  '("%latex -pdfxe -output-directory=%o"))))
 
 
 ;; backtrace view
@@ -229,17 +228,19 @@ buffer's lines, go to the last line."
 ;; change focus backward
 (global-set-key (kbd "C-c q") (lambda () (interactive) (other-window -1)))
 
+;; change font size with C-[MouseWheelUpOrDown]
+(global-set-key (kbd "<C-mouse-4>") (lambda () (interactive) (text-scale-decrease 1)))
+(global-set-key (kbd "<C-mouse-5>") (lambda () (interactive) (text-scale-increase 1)))
+
 ;; revert buffer
 (global-set-key [f1] (lambda () (interactive)
 		       (progn (revert-buffer nil t t) (message "%s" "buffer reverted"))))
-;(global-set-key "\C-c\C-r" (lambda () (interactive)
-;			     (progn (revert-buffer nil t t) (message "%s" "buffer reverted"))))
 
 ;; for previously defined functions:
 (global-set-key "\C-cg" 'go-line)
 (global-set-key "\C-c\C-c" 'copy-lines)
-;; C-c C-c for copy the current line
-;; C-u N C-c C-c to copy N lines
+; C-c C-c for copy the current line
+; C-u N C-c C-c to copy N lines
 (global-set-key (kbd "C-S-s") 'isearch-region)
 (global-set-key (kbd "C-c C-S") 'search-region)
 (global-set-key (kbd "C-c C-f") 'open-file-from-region)
@@ -249,21 +250,11 @@ buffer's lines, go to the last line."
 (global-set-key (kbd "C-c c") 'cap-region)
 (global-set-key (kbd "M-u") 'uppercase-word)
 (global-set-key (kbd "M-l") 'lowercase-word)
-;(when syswin ;; for some reason my laptop doesn't like M-u as much as M-l
-;  (global-set-key (kbd "M-u") 'upcase-word)) ;; fuck M-U
 (global-set-key (kbd "M-s") (lambda () (interactive) (number-to-subscript)))
-(global-set-key [f2] 'run-python-program)
-(global-set-key [f3] 'run-pythonXY-program)
-
-;; change font size with C-[MouseWheelUpOrDown]
-(global-set-key (kbd "<C-mouse-4>") (lambda () (interactive) (text-scale-decrease 1)))
-(global-set-key (kbd "<C-mouse-5>") (lambda () (interactive) (text-scale-increase 1)))
-
-;; python mode comment/uncomment
-(global-set-key (kbd "C-c C-SPC") 'comment-or-uncomment-region)
-;; (add-hook 'python-mode-hook
-;; 	  (lambda ()
-;;             (local-set-key (kbd "C-c C-SPC") 'comment-or-uncomment-region)))
+(with-eval-after-load 'python
+            (define-key python-mode-map [f2] 'run-python-program)
+            (define-key python-mode-map [f3] 'run-pythonXY-program)
+            (define-key python-mode-map (kbd "C-c C-SPC") 'comment-or-uncomment-region))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -292,7 +283,7 @@ buffer's lines, go to the last line."
 	      term-input-autoexpand t
 	      x-select-enable-clipboard t)
 ; for C-q
-(setq-default fill-column 80)
+(setq-default fill-column 85)
 (setq-default sentence-end-double-space nil)
 
 ;; columns and rows
