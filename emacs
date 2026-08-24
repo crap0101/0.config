@@ -60,10 +60,12 @@
 (global-set-key (kbd "C-S-<left>") (lambda () (interactive) (vibuf-prev-buffer)))
 (global-set-key (kbd "C-S-<right>") (lambda () (interactive) (vibuf-next-buffer)))
 
+
 ;; recentf
 (require 'recentf)
 (recentf-mode 1)
 (add-hook 'buffer-list-update-hook 'recentf-track-opened-file)
+
 
 ;; org-mode
 (add-hook 'org-mode-hook
@@ -75,6 +77,28 @@
             (setq org-latex-compiler "latexmk")
             (setq org-latex-pdf-process
                   '("%latex -pdfxe -output-directory=%o"))))
+
+
+;; dired
+(defun dired-replace-buffer__mouse-event (event)
+    "Replace the current dired buffer with the clicked file/dir"
+    (interactive "e")
+    (mouse-set-point event)
+    (let ((selected-file (dired-get-filename nil t))
+          (original-buffer (current-buffer)))
+      (when selected-file
+        (if (file-directory-p selected-file)
+            (dired-find-alternate-file)
+          (switch-to-buffer (find-file-noselect selected-file))))))
+
+(add-hook 'dired-mode-hook
+          (lambda ()
+            (put 'dired-find-alternate-file 'disabled nil)
+            (setq-local mouse-1-click-follows-link nil)
+            ;(define-key dired-mode-map [C-up] ') ;XXX+TODO: go to the last visited dir
+            (define-key dired-mode-map [C-down] 'dired-up-directory)
+            (define-key dired-mode-map [mouse-1] 'dired-mouse-find-file-other-window)
+            (define-key dired-mode-map [mouse-2] 'dired-replace-buffer__mouse-event)))
 
 
 ;; backtrace view
