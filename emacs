@@ -80,6 +80,26 @@
 
 
 ;; dired
+(require 'ring)
+(defcustom dired__last-visited-len 25 "length for the dired ring")
+(defvar dired__last-visited (make-ring dired__last-visited-len))
+(defvar dired__track-this t)
+
+(defun dired__last-visited ()
+  "Go to the last visited directory, excluding ones visited from this function."
+  (interactive)
+  (if (ring-empty-p dired__last-visited)
+      (message "dired__last-visited is empty!")
+    (let ((last-visited (ring-ref dired__last-visited 0)))
+      (if (derived-mode-p 'dired-mode)  ;; in case want to call this function interactively
+          (progn
+            (ring-insert-at-beginning dired__last-visited (ring-remove dired__last-visited 0))
+            (setq dired__track-this nil)
+            (find-alternate-file (ring-ref dired__last-visited 0)))
+        (progn
+          (setq dired__track-this nil)
+          (dired last-visited))))))
+
 (defun dired-replace-buffer__mouse-event (event)
     "Replace the current dired buffer with the clicked file/dir"
     (interactive "e")
@@ -94,19 +114,57 @@
 (add-hook 'dired-mode-hook
           (lambda ()
             (put 'dired-find-alternate-file 'disabled nil)
-            (setq-local mouse-1-click-follows-link nil)
-            ;(define-key dired-mode-map [C-up] ') ;XXX+TODO: go to the last visited dir
-            (define-key dired-mode-map [C-down] 'dired-up-directory)
-            (define-key dired-mode-map [mouse-1] 'dired-mouse-find-file-other-window)
-            (define-key dired-mode-map [mouse-2] 'dired-replace-buffer__mouse-event)))
+            (setq-local mouse-1-click-follows-link nil)))
+
+(add-hook 'dired-mode-hook
+          (lambda ()
+            (if dired__track-this
+                (ring-insert dired__last-visited dired-directory))
+            (setq dired__track-this t)))
+
+(with-eval-after-load 'dired
+  (define-key dired-mode-map "r" 'dired__last-visited)
+  (define-key dired-mode-map "z" 'dired-up-directory)
+  (define-key dired-mode-map [mouse-1] 'dired-mouse-find-file-other-window)
+  (define-key dired-mode-map [mouse-2] 'dired-replace-buffer__mouse-event))
 
 
 ;; backtrace view
 (add-hook 'backtrace-mode-hook 'visual-line-mode)
 
+
+;; lisp mode
+(define-key lisp-mode-shared-map (kbd "C-c C-SPC") 'comment-or-uncomment-region)
+
+(add-hook 'lisp-interaction-mode-hook
+          (lambda ()
+            (local-set-key (kbd "C-c e") 'eval-region)))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; custom functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;
+
+;; custom switch-to-buffer
+(defun go-buffer (buffer-name)
+  "Switch to the buffer which name is the most similar
+(Levenshtein distance, after regex's filtering) to *buffer-name*,
+searching in the current buffer-list."
+  (interactive "MBuffer name: ")
+  (let ((min-distance 1000)
+        (match-found nil)
+        (buffer-names
+         (seq-filter (lambda (b) (not (string-prefix-p " " b)))
+                     (mapcar #'buffer-name (buffer-list)))))
+    (dolist (name buffer-names)
+      (when (string-match buffer-name name)
+        (let ((distance (string-distance name buffer-name)))
+          (when (< distance min-distance)
+            (setq min-distance distance)
+            (setq match-found name)))))
+    (if match-found
+        (switch-to-buffer match-found)
+      (message "No buffer similar to: %s" buffer-name))))
 
 ;; custom goto-line
 (defun go-line (num)
@@ -261,8 +319,9 @@ buffer's lines, go to the last line."
 		       (progn (revert-buffer nil t t) (message "%s" "buffer reverted"))))
 
 ;; for previously defined functions:
-(global-set-key "\C-cg" 'go-line)
-(global-set-key "\C-c\C-c" 'copy-lines)
+(global-set-key (kbd "C-c b") 'go-buffer)
+(global-set-key (kbd "C-c g") 'go-line)
+(global-set-key (kbd "C-c C-c") 'copy-lines)
 ; C-c C-c for copy the current line
 ; C-u N C-c C-c to copy N lines
 (global-set-key (kbd "C-S-s") 'isearch-region)
