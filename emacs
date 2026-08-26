@@ -29,6 +29,9 @@
 ;; more debugging
 (toggle-debug-on-error)
 
+;; backtrace view
+(add-hook 'backtrace-mode-hook 'visual-line-mode)
+
 ;; maximize window
 (setq initial-frame-alist '((fullscreen . maximized)))
 
@@ -39,9 +42,11 @@
   (server-start)
   (message (format "server started (%s)" (server-running-p))))
 
-;;;;;;;;;;;;;;;;;;;
-;; load packages ;;
-;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;
+;; packages / modes ;;
+;;;;;;;;;;;;;;;;;;;;;;
+
 
 ;; vibuf: load
 (when gnu+linux
@@ -49,14 +54,14 @@
 (when syswin
   (add-to-list 'load-path "c:/Users/c24p0/AppData/Roaming/.emacs.d/lisp"))
 (require 'vibuf)
-;; vibuf: add hooks
+;; vibuf: hooks
 (add-hook 'find-file-hook 'vibuf-create-buffer-hook-function)
 (add-hook 'kill-buffer-hook 'vibuf-kill-buffer-hook-function)
 (add-hook 'emacs-startup-hook 'vibuf-set__buffer-list-default)
 (add-hook 'emacs-startup-hook (lambda () (vibuf-set__excluded-names vibuf__excluded-names)))
 ;; vibuf: set some vars
 (vibuf-set__buffer-name-if-empty "*scratch*")
-;; vibuf: set key bindings
+;; vibuf: key bindings
 (global-set-key (kbd "C-S-<left>") (lambda () (interactive) (vibuf-prev-buffer)))
 (global-set-key (kbd "C-S-<right>") (lambda () (interactive) (vibuf-next-buffer)))
 
@@ -81,7 +86,7 @@
 
 ;; dired
 (require 'ring)
-(defcustom dired__last-visited-len 25 "length for the dired ring")
+(defcustom dired__last-visited-len 25 "length for the custom dired ring")
 (defvar dired__last-visited (make-ring dired__last-visited-len))
 (defvar dired__track-this t)
 
@@ -127,10 +132,6 @@
   (define-key dired-mode-map "z" 'dired-up-directory)
   (define-key dired-mode-map [mouse-1] 'dired-mouse-find-file-other-window)
   (define-key dired-mode-map [mouse-2] 'dired-replace-buffer__mouse-event))
-
-
-;; backtrace view
-(add-hook 'backtrace-mode-hook 'visual-line-mode)
 
 
 ;; lisp mode
@@ -212,56 +213,80 @@ buffer's lines, go to the last line."
     (downcase-word (if n n 1))))
 
 ;; search by region, case-sensitive
-(defun search-region (start end)
+(defun search-region ()
   "Starts a search using the region of the current buffer."
-  (interactive "r")
-  (setq search-region__previous_cs case-fold-search)
-  (setq case-fold-search nil)
-  (isearch-mode t nil nil nil)
-  (deactivate-mark)
-  (isearch-yank-string (buffer-substring-no-properties start end))
-  (setq case-fold-search search-region__previous_cs))
+  (interactive)
+  (if (use-region-p)
+      (progn
+        (setq search-region__previous_cs case-fold-search)
+        (setq case-fold-search nil)
+        (isearch-mode t nil nil nil)
+        (deactivate-mark)
+        (isearch-yank-string
+         (buffer-substring-no-properties (region-beginning) (region-end)))
+        (setq case-fold-search search-region__previous_cs))
+    (message "search-region: no active region!")))
 
 ;; search by region, case-insensitive
-(defun isearch-region (start end)
+(defun isearch-region ()
   "Starts a search using the region of the current buffer."
-  (interactive "r")
-  (setq search-region__previous_cs case-fold-search)
-  (setq case-fold-search t)
-  (isearch-mode t nil nil nil)
-  (deactivate-mark)
-  (isearch-yank-string (buffer-substring-no-properties start end))
-  (setq case-fold-search search-region__previous_cs))
+  (interactive)
+  (if (use-region-p)
+      (progn
+        (setq search-region__previous_cs case-fold-search)
+        (setq case-fold-search t)
+        (isearch-mode t nil nil nil)
+        (deactivate-mark)
+        (isearch-yank-string
+         (buffer-substring-no-properties (region-beginning) (region-end)))
+        (setq case-fold-search search-region__previous_cs))
+    (message "isearch-region: no active region!")))
 
 ;; uppercase region
-(defun uppercase-region (start end)
+(defun uppercase-region ()
   "uppercase the region of the current buffer."
-  (interactive "r")  
-  (deactivate-mark)
-  (upcase-region start end))
+  (interactive)
+  (if (use-region-p)
+      (progn
+        (upcase-region (region-beginning) (region-end))
+        (deactivate-mark))
+    (message "uppercase-region: no active region!")))
 
 ;; downcase region
-(defun lowercase-region (start end)
+(defun lowercase-region ()
   "lowercase the region of the current buffer."
-  (interactive "r")  
-  (deactivate-mark)
-  (downcase-region start end))
+  (interactive)
+  (if (use-region-p)
+      (progn
+        (message "there is a region")
+        (downcase-region (region-beginning) (region-end))
+        (deactivate-mark))
+    (message "lowercase-region: no active region!")))
 
 ;; capitalize region
-(defun cap-region (start end)
+(defun cap-region ()
   "capitalize the region of the current buffer."
-  (interactive "r")  
-  (deactivate-mark)
-  (capitalize-region start end))
+  (interactive)
+  (if (use-region-p)
+      (progn
+        (message "there is a region")
+        (capitalize-region (region-beginning) (region-end))
+        (deactivate-mark))
+    (message "cap-region: no active region!")))
 
 ;; open file from region
-(defun open-file-from-region (start end)
+(defun open-file-from-region ()
   "open the filename from the region of the current buffer"
-  (interactive "r")
-  (deactivate-mark)
-  (switch-to-buffer
-    (find-file-noselect
-      (buffer-substring-no-properties start end)  nil nil nil)))
+  (interactive)
+  (if (use-region-p)
+      (progn
+        (deactivate-mark)
+        (let ((start (region-beginning))
+              (end (region-end)))
+          (switch-to-buffer
+           (find-file-noselect
+            (buffer-substring-no-properties start end)  nil nil nil))))
+    (message "open-file-from-region: no active region!")))
 
 ;; insert date
 (defun insert-date (prefix)
@@ -318,6 +343,9 @@ buffer's lines, go to the last line."
 (global-set-key [f1] (lambda () (interactive)
 		       (progn (revert-buffer nil t t) (message "%s" "buffer reverted"))))
 
+;; open urls
+(global-set-key (kbd "C-c C-u") 'browse-url)
+
 ;; for previously defined functions:
 (global-set-key (kbd "C-c b") 'go-buffer)
 (global-set-key (kbd "C-c g") 'go-line)
@@ -356,6 +384,8 @@ buffer's lines, go to the last line."
 ;; browser
 (setq-default browse-url-browser-function 'browse-url-firefox
 	      browse-url-firefox-program "firefox-esr")
+; should be nil by default:
+(setq browse-url-new-window-flag nil)
 
 ;; no beep
 (setq-default visible-bell t)
