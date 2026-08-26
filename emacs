@@ -276,7 +276,7 @@ buffer's lines, go to the last line."
 
 ;; open file from region
 (defun open-file-from-region ()
-  "open the filename from the region of the current buffer"
+  "Open the filename from the region of the current buffer"
   (interactive)
   (if (use-region-p)
       (progn
@@ -287,6 +287,26 @@ buffer's lines, go to the last line."
            (find-file-noselect
             (buffer-substring-no-properties start end)  nil nil nil))))
     (message "open-file-from-region: no active region!")))
+
+;; open url from region
+(defun open-url-from-region (&optional fallback)
+  "Open the url from the region of the current buffer.
+When no region is selected and *fallback* is not nil,
+tries to get the url from the current point and open it."
+  (interactive)
+  (if (use-region-p)
+      (progn
+        (message "region selected")
+        (let ((start (region-beginning))
+              (end (region-end)))
+          (deactivate-mark)
+          (browse-url (buffer-substring-no-properties start end))))
+    (save-excursion
+      (when fallback
+        (let
+            ((start (progn (forward-thing 'whitespace -1) (forward-to-word) (point)))
+             (end (progn (forward-thing 'whitespace 1) (backward-to-word) (point))))
+          (browse-url (buffer-substring-no-properties start end)))))))
 
 ;; insert date
 (defun insert-date (prefix)
@@ -344,7 +364,7 @@ buffer's lines, go to the last line."
 		       (progn (revert-buffer nil t t) (message "%s" "buffer reverted"))))
 
 ;; open urls
-(global-set-key (kbd "C-c C-u") 'browse-url)
+(global-set-key (kbd "C-c C-u") (lambda () (interactive) (open-url-from-region 1)))
 
 ;; for previously defined functions:
 (global-set-key (kbd "C-c b") 'go-buffer)
