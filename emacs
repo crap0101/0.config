@@ -405,16 +405,16 @@ tries to get the url from the current point and open it."
 (setq-default browse-url-browser-function 'browse-url-firefox
 	      browse-url-firefox-program "firefox-esr")
 ; should be nil by default:
-(setq browse-url-new-window-flag nil)
+(setq-default browse-url-new-window-flag nil)
 
 ;; no beep
 (setq-default visible-bell t)
 
 ;; text related
 (setq-default indent-tabs-mode nil
-	      tab-width 4
-	      term-input-autoexpand t
-	      x-select-enable-clipboard t)
+	          tab-width 4
+	          term-input-autoexpand t
+	          x-select-enable-clipboard t)
 ; for C-q
 (setq-default fill-column 85)
 (setq-default sentence-end-double-space nil)
