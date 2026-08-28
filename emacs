@@ -23,8 +23,9 @@
 ;;;;;;;;;;;;;;;;;
 
 ;; system type
-(defvar gnu+linux (string-equal system-type "gnu/linux"))
-(defvar syswin (string-equal system-type "windows-nt"))
+(defvar is_gnu+linux (eq system-type 'gnu/linux))
+(defvar is_syswin (eq system-type 'windows-nt))
+(defvar is_android (eq system-type 'android))
 
 ;; more debugging
 (toggle-debug-on-error)
@@ -32,15 +33,17 @@
 ;; backtrace view
 (add-hook 'backtrace-mode-hook 'visual-line-mode)
 
-;; maximize window
-(setq initial-frame-alist '((fullscreen . maximized)))
+;; maximize window (not on android)
+(unless is_android
+  (setq initial-frame-alist '((fullscreen . maximized))))
 
-;; set & start emacs server
-(require 'server)
-;;(setq server-name "emacs-server-main")
-(unless (server-running-p)
-  (server-start)
-  (message (format "server started (%s)" (server-running-p))))
+;; set & start emacs server (not on android)
+(unless is_android
+  (require 'server)
+  ;;(setq server-name "emacs-server-main")
+  (unless (server-running-p)
+    (server-start)
+    (message (format "server started (%s)" (server-running-p)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -48,22 +51,23 @@
 ;;;;;;;;;;;;;;;;;;;;;;
 
 
-;; vibuf: load
-(when gnu+linux
-  (add-to-list 'load-path "/home/crap0101/local/share/emacs"))
-(when syswin
-  (add-to-list 'load-path "c:/Users/c24p0/AppData/Roaming/.emacs.d/lisp"))
-(require 'vibuf)
-;; vibuf: hooks
-(add-hook 'find-file-hook 'vibuf-create-buffer-hook-function)
-(add-hook 'kill-buffer-hook 'vibuf-kill-buffer-hook-function)
-(add-hook 'emacs-startup-hook 'vibuf-set__buffer-list-default)
-(add-hook 'emacs-startup-hook (lambda () (vibuf-set__excluded-names vibuf__excluded-names)))
-;; vibuf: set some vars
-(vibuf-set__buffer-name-if-empty "*scratch*")
-;; vibuf: key bindings
-(global-set-key (kbd "C-S-<left>") (lambda () (interactive) (vibuf-prev-buffer)))
-(global-set-key (kbd "C-S-<right>") (lambda () (interactive) (vibuf-next-buffer)))
+;; vibuf: load (not on android)
+(unless is_android
+  (when is_gnu+linux
+    (add-to-list 'load-path "/home/crap0101/local/share/emacs"))
+  (when is_syswin
+    (add-to-list 'load-path "c:/Users/c24p0/AppData/Roaming/.emacs.d/lisp"))
+  (require 'vibuf)
+  ;; vibuf: hooks
+  (add-hook 'find-file-hook 'vibuf-create-buffer-hook-function)
+  (add-hook 'kill-buffer-hook 'vibuf-kill-buffer-hook-function)
+  (add-hook 'emacs-startup-hook 'vibuf-set__buffer-list-default)
+  (add-hook 'emacs-startup-hook (lambda () (vibuf-set__excluded-names vibuf__excluded-names)))
+  ;; vibuf: set some vars
+  (vibuf-set__buffer-name-if-empty "*scratch*")
+  ;; vibuf: key bindings
+  (global-set-key (kbd "C-S-<left>") (lambda () (interactive) (vibuf-prev-buffer)))
+  (global-set-key (kbd "C-S-<right>") (lambda () (interactive) (vibuf-next-buffer))))
 
 
 ;; recentf
@@ -346,9 +350,9 @@ tries to get the url from the current point and open it."
 	  (insert (format "%c" (+ 8272 ival)))))))
 
 
-;;;;;;;;;;;;;;
-;; bindings ;;
-;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;
+;; key bindings ;;
+;;;;;;;;;;;;;;;;;;
 
 ;; redefine this: change focus forward
 (global-set-key (kbd "C-c w") 'other-window)
@@ -402,8 +406,11 @@ tries to get the url from the current point and open it."
 (setq-default scroll-preserve-screen-position t)
 
 ;; browser
-(setq-default browse-url-browser-function 'browse-url-firefox
-	      browse-url-firefox-program "firefox-esr")
+(when is_android
+  (setq browse-url-browser-function 'browse-url-default-android-browser))
+(unless is_android
+  (setq-default browse-url-browser-function 'browse-url-firefox
+	      browse-url-firefox-program "firefox-esr"))
 ; should be nil by default:
 (setq-default browse-url-new-window-flag nil)
 
@@ -414,7 +421,7 @@ tries to get the url from the current point and open it."
 (setq-default indent-tabs-mode nil
 	          tab-width 4
 	          term-input-autoexpand t
-	          x-select-enable-clipboard t)
+	          select-enable-clipboard t)
 ; for C-q
 (setq-default fill-column 85)
 (setq-default sentence-end-double-space nil)
@@ -428,22 +435,24 @@ tries to get the url from the current point and open it."
 ;; set color, faces and similar stuffs ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (set-background-color "#000000") ;"#333333")
-;; (set-foreground-color "#33CC00")
-(set-face-attribute 'default t
-                    :stipple nil
-                    :inverse-video nil
-                    :box nil
-                    :strike-through nil
-                    :overline nil
-                    :underline nil
-                    :slant 'normal
-                    :weight 'normal
-                    :height 140
-                    :width 'normal
-                    :family "DejaVu Sans Mono")
-(set-face-attribute 'region nil :background "#666666")
-(set-frame-font "DejaVu Sans Mono 15")
+(unless is_android
+  ;; (set-background-color "#000000") ;"#333333")
+  ;; (set-foreground-color "#33CC00")
+  (set-face-attribute 'default t
+                      :stipple nil
+                      :inverse-video nil
+                      :box nil
+                      :strike-through nil
+                      :overline nil
+                      :underline nil
+                      :slant 'normal
+                      :weight 'normal
+                      :height 140
+                      :width 'normal
+                      :family "DejaVu Sans Mono")
+  (set-face-attribute 'region nil :background "#666666")
+  (set-frame-font "DejaVu Sans Mono 15"))
+
 
 ;; diff colors
 (defun update-diff-colors ()
