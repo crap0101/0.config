@@ -141,9 +141,10 @@
 ;; lisp mode
 (define-key lisp-mode-shared-map (kbd "C-c C-SPC") 'comment-or-uncomment-region)
 
-(add-hook 'lisp-interaction-mode-hook
-          (lambda ()
-            (local-set-key (kbd "C-c e") 'eval-region)))
+(dolist (hook '(emacs-lisp-mode-hook lisp-interaction-mode-hook))
+  (add-hook hook
+            (lambda ()
+              (local-set-key (kbd "C-c e") 'eval-region))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;
