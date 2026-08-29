@@ -37,13 +37,16 @@
 (unless is_android
   (setq initial-frame-alist '((fullscreen . maximized))))
 
-;; set & start emacs server (not on android)
-(unless is_android
-  (require 'server)
-  ;;(setq server-name "emacs-server-main")
-  (unless (server-running-p)
+;; set & start emacs server
+(require 'server)
+;;(setq server-name "emacs-server-main")
+(unless (server-running-p)
+  (when is_android
+    (setq server-use-tcp t
+          server-host "127.0.0.1"
+          server-port 60325))
     (server-start)
-    (message (format "server started (%s)" (server-running-p)))))
+    (message (format "server started (%s)" (server-running-p))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -56,7 +59,7 @@
   (when is_gnu+linux
     (add-to-list 'load-path "/home/crap0101/local/share/emacs"))
   (when is_syswin
-    (add-to-list 'load-path "c:/Users/c24p0/AppData/Roaming/.emacs.d/lisp"))
+    (add-to-list 'load-path (file-name-concat (expand-file-name "~") ".emacs.d/lisp")))
   (require 'vibuf)
   ;; vibuf: hooks
   (add-hook 'find-file-hook 'vibuf-create-buffer-hook-function)
