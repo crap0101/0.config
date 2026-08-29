@@ -154,6 +154,28 @@
 ;; custom functions ;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
+;; lists local variables
+(defun local-variables-in-buffer (&optional buff showvalue separator value-separator)
+  "Lists the local variables of buffer *buff* (or, if nil, the current buffer)
+in a new text buffer. If *showvalue* is not nil, show also their value.
+*separator* is used when *showvalue* is nil (default to newline)
+*value-separator when *showvalue* is not nil (default to \"\\n=====================================\\n\")
+Example:
+  (local-variables-in-buffer)  ;; list only the variables of the current buffer
+  (local-variables-in-buffer nil 1 nil nil)  ;; list the variables and the values of the current buffer
+  (local-variables-in-buffer nil 1 nil \"\\n***\\n\")  ;; alternative separator: newlines to be used to have the other separator characters alone on one line.
+  (local-variables-in-buffer (next-buffer) 1 nil nil)  ;; lists the variables from the buffer returned by next-buffer."
+  (let* ((target-buffer (or buff (current-buffer)))
+         (local-list (seq-filter (lambda (x) (local-variable-p (car x))) (buffer-local-variables target-buffer)))
+         (bufname (buffer-name target-buffer))
+         (sep (or separator "\n"))
+         (kvsep (or value-separator "\n=====================================\n")))
+    (switch-to-buffer (generate-new-buffer-name (format "local-vars_%s" bufname)))
+    (if showvalue
+        (setq-local str-vars (mapconcat (lambda (x) (format "%s: %s" (car x) (format "%s" (cdr x)))) local-list kvsep))
+      (setq-local str-vars (mapconcat (lambda (x) (format "%s" (car x))) local-list sep)))
+    (insert str-vars)))
+
 ;; custom switch-to-buffer
 (defun go-buffer (buffer-name)
   "Switch to the buffer which name is the most similar
