@@ -27,15 +27,19 @@
 (defvar is_syswin (eq system-type 'windows-nt))
 (defvar is_android (eq system-type 'android))
 
+
 ;; more debugging
 (toggle-debug-on-error)
+
 
 ;; backtrace view
 (add-hook 'backtrace-mode-hook 'visual-line-mode)
 
+
 ;; maximize window (not on android)
 (unless is_android
   (setq initial-frame-alist '((fullscreen . maximized))))
+
 
 ;; set & start emacs server
 (require 'server)
@@ -47,6 +51,14 @@
           server-port 60325))
     (server-start)
     (message (format "server started (%s)" (server-running-p))))
+
+
+;; set path to shared folder on (FUCKING) android
+(when is_android
+  (defun shared-folder ()
+    (interactive)
+    (dired "/content/storage/com.android.externalstorage.documents/primary:Documents/emacs/"))
+  (global-set-key (kbd "<f5>") 'shared-folder))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -380,6 +392,8 @@ tries to get the url from the current point and open it."
 ;; key bindings ;;
 ;;;;;;;;;;;;;;;;;;
 
+;; NOTE: see above for *set-key on android, vibuf and lisp-mode
+
 ;; redefine this: change focus forward
 (global-set-key (kbd "C-c w") 'other-window)
 ;; change focus backward
@@ -390,7 +404,7 @@ tries to get the url from the current point and open it."
 (global-set-key (kbd "<C-mouse-5>") (lambda () (interactive) (text-scale-increase 1)))
 
 ;; revert buffer
-(global-set-key [f1] (lambda () (interactive)
+(global-set-key (kbd "<f1>") (lambda () (interactive)
 		       (progn (revert-buffer nil t t) (message "%s" "buffer reverted"))))
 
 ;; open urls
@@ -413,8 +427,8 @@ tries to get the url from the current point and open it."
 (global-set-key (kbd "M-l") 'lowercase-word)
 (global-set-key (kbd "M-s") (lambda () (interactive) (number-to-subscript)))
 (with-eval-after-load 'python
-            (define-key python-mode-map [f2] 'run-python-program)
-            (define-key python-mode-map [f3] 'run-pythonXY-program)
+            (define-key python-mode-map (kbd "<f2>") 'run-python-program)
+            (define-key python-mode-map (kbd "<f3>") 'run-pythonXY-program)
             (define-key python-mode-map (kbd "C-c C-SPC") 'comment-or-uncomment-region))
 
 
