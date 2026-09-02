@@ -177,6 +177,7 @@ Example:
   (local-variables-in-buffer nil 1 nil nil)  ;; list the variables and the values of the current buffer
   (local-variables-in-buffer nil 1 nil \"\\n***\\n\")  ;; alternative separator: newlines to be used to have the other separator characters alone on one line.
   (local-variables-in-buffer (next-buffer) 1 nil nil)  ;; lists the variables from the buffer returned by next-buffer."
+  (interactive)
   (let* ((target-buffer (or buff (current-buffer)))
          (local-list (seq-filter (lambda (x) (local-variable-p (car x))) (buffer-local-variables target-buffer)))
          (bufname (buffer-name target-buffer))
