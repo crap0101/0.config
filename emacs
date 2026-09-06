@@ -156,7 +156,7 @@
 ;; lisp mode
 (define-key lisp-mode-shared-map (kbd "C-c C-SPC") 'comment-or-uncomment-region)
 
-;; lisp mode
+;; sh mode
 (define-key sh-mode-map (kbd "C-c C-SPC") 'comment-or-uncomment-region)
 
 (dolist (hook '(emacs-lisp-mode-hook lisp-interaction-mode-hook))
