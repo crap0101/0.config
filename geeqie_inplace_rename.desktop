@@ -1,0 +1,25 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+
+# The Desktop file MUST contain the following:
+Categories=Graphics;
+
+# The name which appears in the menu:
+Name[en_GB]=in_place_rename
+Name[it_IT]=in_place_rename
+
+# Replace "command" with the actual command or script:
+Exec=/home/crap0101/local/etc/geeqie_inplace_rename_plugin.sh
+
+# The key or key combination to execute this function can be set as
+# in this example:
+# N.B. This value may conflict with a setting in Keyboard Options
+#X-Geeqie-Hotkey=<F2> # binded in config dialog to "<Primary>r" (Ctrl+r)
+
+Categories=X-Geeqie;Graphics;
+X-Geeqie-Menu-Path=PluginsMenu
+#OnlyShowIn=X-Geeqie;
+Terminal=frue
+Hidden=false
+MimeType=image/*;
