@@ -1,4 +1,7 @@
+;; -*- lexical-binding: t; -*-
+
 ;; .emacs init file
+
 
 ;; This file is NOT part of GNU Emacs.
 ;;
