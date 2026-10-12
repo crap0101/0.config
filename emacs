@@ -26,9 +26,9 @@
 ;;;;;;;;;;;;;;;;;
 
 ;; system type
-(defvar is_gnu+linux (eq system-type 'gnu/linux))
-(defvar is_syswin (eq system-type 'windows-nt))
-(defvar is_android (eq system-type 'android))
+(defvar init/sys-is-gnu+linux (eq system-type 'gnu/linux))
+(defvar init/sys-is-win (eq system-type 'windows-nt))
+(defvar init/sys-is-android (eq system-type 'android))
 
 
 ;; more debugging
@@ -36,11 +36,11 @@
 
 
 ;; backtrace view
-(add-hook 'backtrace-mode-hook 'visual-line-mode)
+(add-hook 'backtrace-mode-hook #'visual-line-mode)
 
 
 ;; maximize window (not on android)
-(unless is_android
+(unless init/sys-is-android
   (setq initial-frame-alist '((fullscreen . maximized))))
 
 
@@ -48,7 +48,7 @@
 (require 'server)
 ;;(setq server-name "emacs-server-main")
 (unless (server-running-p)
-  (when is_android
+  (when init/sys-is-android
     (setq server-use-tcp t
           server-host "127.0.0.1"
           server-port 60325))
@@ -57,11 +57,11 @@
 
 
 ;; set path to shared folder on (FUCKING) android
-(when is_android
+(when init/sys-is-android
   (defun shared-folder ()
     (interactive)
     (dired "/content/storage/com.android.externalstorage.documents/primary:Documents/emacs/"))
-  (global-set-key (kbd "<f5>") 'shared-folder))
+  (global-set-key (kbd "<f5>") #'shared-folder))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -69,103 +69,109 @@
 ;;;;;;;;;;;;;;;;;;;;;;
 
 
-;; vibuf: load (not on android)
-(unless is_android
-  (when is_gnu+linux
-    (add-to-list 'load-path "/home/crap0101/local/share/emacs"))
-  (when is_syswin
-    (add-to-list 'load-path (file-name-concat (expand-file-name "~") ".emacs.d/lisp")))
-  (require 'vibuf)
-  ;; vibuf: hooks
-  (add-hook 'find-file-hook 'vibuf-create-buffer-hook-function)
-  (add-hook 'kill-buffer-hook 'vibuf-kill-buffer-hook-function)
-  (add-hook 'emacs-startup-hook 'vibuf-set__buffer-list-default)
-  (add-hook 'emacs-startup-hook (lambda () (vibuf-set__excluded-names vibuf__excluded-names)))
-  ;; vibuf: set some vars
-  (vibuf-set__buffer-name-if-empty "*scratch*")
-  ;; vibuf: key bindings
-  (global-set-key (kbd "C-S-<left>") (lambda () (interactive) (vibuf-prev-buffer)))
-  (global-set-key (kbd "C-S-<right>") (lambda () (interactive) (vibuf-next-buffer))))
+;; vibuf: load
+;;(when init/sys-is-android
+(when init/sys-is-gnu+linux
+  (add-to-list 'load-path "/home/crap0101/local/share/emacs"))
+(when init/sys-is-win
+  (add-to-list 'load-path (file-name-concat (expand-file-name "~") ".emacs.d/lisp")))
+
+(if (require 'vibuf nil t)
+    (progn
+      ;; vibuf: hooks
+      (add-hook 'find-file-hook #'vibuf/create-buffer-hook-function)
+      (add-hook 'kill-buffer-hook #'vibuf/kill-buffer-hook-function)
+      (add-hook 'emacs-startup-hook #'vibuf/set-buffer-list-default)
+      (add-hook 'emacs-startup-hook #'(lambda () (vibuf/set-excluded-names vibuf/excluded-names)))
+      ;; vibuf: set some vars
+      (vibuf/set-buffer-name-if-empty "*scratch*")
+      ;; vibuf: key bindings
+      (global-set-key (kbd "C-S-<left>") #'(lambda () (interactive) (vibuf/prev-buffer)))
+      (global-set-key (kbd "C-S-<right>") #'(lambda () (interactive) (vibuf/next-buffer))))
+  (message "vibuf package not found: ignoring it."))
 
 
 ;; recentf
 (require 'recentf)
 (recentf-mode 1)
-(add-hook 'buffer-list-update-hook 'recentf-track-opened-file)
+(add-hook 'buffer-list-update-hook #'recentf-track-opened-file)
 
 
 ;; org-mode
-(add-hook 'org-mode-hook
-          (lambda ()
-            (setq fill-column 80)
-            (display-fill-column-indicator-mode 1)
-            (refill-mode 1)
-            (org-indent-mode 1)
-            (setq org-latex-compiler "latexmk")
-            (setq org-latex-pdf-process
-                  '("%latex -pdfxe -output-directory=%o"))))
+(with-eval-after-load 'org
+  (declare-function org-indent-mode "org-indent" (&optional arg))
+  (add-hook 'org-mode-hook
+            #'(lambda ()
+                (setq fill-column 80)
+                (display-fill-column-indicator-mode 1)
+                (refill-mode 1)
+                (org-indent-mode 1)
+                (setq org-latex-compiler "latexmk")
+                (setq org-latex-pdf-process
+                      '("%latex -pdfxe -output-directory=%o")))))
 
 
 ;; dired
 (require 'ring)
-(defcustom dired__last-visited-len 25 "length for the custom dired ring")
-(defvar dired__last-visited (make-ring dired__last-visited-len))
+(defcustom dired/last-visited-len 25 "length for the custom dired ring"
+  :type 'integer
+  :group 'dired)
+(defvar dired/last-visited (make-ring dired/last-visited-len))
 (defvar dired__track-this t)
 
-(defun dired__last-visited ()
+(defun dired/last-visited ()
   "Go to the last visited directory, excluding ones visited from this function."
   (interactive)
-  (if (ring-empty-p dired__last-visited)
-      (message "dired__last-visited is empty!")
-    (let ((last-visited (ring-ref dired__last-visited 0)))
+  (if (ring-empty-p dired/last-visited)
+      (message "dired/last-visited is empty!")
+    (let ((last-visited (ring-ref dired/last-visited 0)))
       (if (derived-mode-p 'dired-mode)  ;; in case want to call this function interactively
           (progn
-            (ring-insert-at-beginning dired__last-visited (ring-remove dired__last-visited 0))
+            (ring-insert-at-beginning dired/last-visited (ring-remove dired/last-visited 0))
             (setq dired__track-this nil)
-            (find-alternate-file (ring-ref dired__last-visited 0)))
+            (find-alternate-file (ring-ref dired/last-visited 0)))
         (progn
           (setq dired__track-this nil)
           (dired last-visited))))))
 
-(defun dired-replace-buffer__mouse-event (event)
+(defun dired/replace-buffer-mouse-event (event)
     "Replace the current dired buffer with the clicked file/dir"
     (interactive "e")
     (mouse-set-point event)
-    (let ((selected-file (dired-get-filename nil t))
-          (original-buffer (current-buffer)))
+    (let ((selected-file (dired-get-filename nil t)))
       (when selected-file
         (if (file-directory-p selected-file)
             (dired-find-alternate-file)
           (switch-to-buffer (find-file-noselect selected-file))))))
 
 (add-hook 'dired-mode-hook
-          (lambda ()
-            (put 'dired-find-alternate-file 'disabled nil)
-            (setq-local mouse-1-click-follows-link nil)))
+          #'(lambda ()
+              (put 'dired-find-alternate-file 'disabled nil)
+              (setq-local mouse-1-click-follows-link nil)))
 
 (add-hook 'dired-mode-hook
-          (lambda ()
-            (if dired__track-this
-                (ring-insert dired__last-visited dired-directory))
-            (setq dired__track-this t)))
+          #'(lambda ()
+              (if dired__track-this
+                  (ring-insert dired/last-visited dired-directory))
+              (setq dired__track-this t)))
 
 (with-eval-after-load 'dired
-  (define-key dired-mode-map "r" 'dired__last-visited)
-  (define-key dired-mode-map "z" 'dired-up-directory)
-  (define-key dired-mode-map [mouse-1] 'dired-mouse-find-file-other-window)
-  (define-key dired-mode-map [mouse-2] 'dired-replace-buffer__mouse-event))
+  (define-key dired-mode-map "r" #'dired/last-visited)
+  (define-key dired-mode-map "z" #'dired-up-directory)
+  (define-key dired-mode-map [mouse-1] #'dired-mouse-find-file-other-window)
+  (define-key dired-mode-map [mouse-2] #'dired/replace-buffer-mouse-event))
 
 
 ;; lisp mode
-(define-key lisp-mode-shared-map (kbd "C-c C-SPC") 'comment-or-uncomment-region)
+(define-key lisp-mode-shared-map (kbd "C-c C-SPC") #'comment-or-uncomment-region)
 
 ;; sh mode
 (with-eval-after-load "sh-script"
-  (define-key sh-mode-map (kbd "C-c C-SPC") 'comment-or-uncomment-region))
+  (define-key sh-mode-map (kbd "C-c C-SPC") #'comment-or-uncomment-region))
 
 (dolist (hook '(emacs-lisp-mode-hook lisp-interaction-mode-hook))
   (add-hook hook
-            (lambda ()
+            #'(lambda ()
               (local-set-key (kbd "C-c e") 'eval-region))))
 
 
@@ -178,22 +184,36 @@
   "Lists the local variables of buffer *buff* (or, if nil, the current buffer)
 in a new text buffer. If *showvalue* is not nil, show also their value.
 *separator* is used when *showvalue* is nil (default to newline)
-*value-separator when *showvalue* is not nil (default to \"\\n=====================================\\n\")
+*value-separator when *showvalue* is not nil
+ (default to \"\\n=====================================\\n\")
 Example:
-  (local-variables-in-buffer)  ;; list only the variables of the current buffer
-  (local-variables-in-buffer nil 1 nil nil)  ;; list the variables and the values of the current buffer
-  (local-variables-in-buffer nil 1 nil \"\\n***\\n\")  ;; alternative separator: newlines to be used to have the other separator characters alone on one line.
-  (local-variables-in-buffer (next-buffer) 1 nil nil)  ;; lists the variables from the buffer returned by next-buffer."
+  ;; list only the variables of the current buffer
+  (local-variables-in-buffer)
+  ;; list the variables and the values of the current buffer
+  (local-variables-in-buffer nil 1 nil nil)
+  ;; alternative separator: newlines to be used to have the other separator
+  ;; characters alone on one line.
+  (local-variables-in-buffer nil 1 nil \"\\n***\\n\")
+  ;; lists the variables from the buffer returned by next-buffer.
+  (local-variables-in-buffer (next-buffer) 1 nil nil)"
   (interactive)
-  (let* ((target-buffer (or buff (current-buffer)))
-         (local-list (seq-filter (lambda (x) (local-variable-p (car x))) (buffer-local-variables target-buffer)))
+  (let* ((str-vars nil)
+         (target-buffer (or buff (current-buffer)))
+         (local-list
+          (seq-filter (lambda (x)
+                        (local-variable-p (car x)))
+                      (buffer-local-variables target-buffer)))
          (bufname (buffer-name target-buffer))
          (sep (or separator "\n"))
          (kvsep (or value-separator "\n=====================================\n")))
     (switch-to-buffer (generate-new-buffer-name (format "local-vars_%s" bufname)))
     (if showvalue
-        (setq-local str-vars (mapconcat (lambda (x) (format "%s: %s" (car x) (format "%s" (cdr x)))) local-list kvsep))
-      (setq-local str-vars (mapconcat (lambda (x) (format "%s" (car x))) local-list sep)))
+        (setq str-vars
+              (mapconcat (lambda (x)
+                           (format "%s: %s" (car x) (format "%s" (cdr x))))
+                         local-list kvsep))
+      (setq str-vars
+            (mapconcat (lambda (x) (format "%s" (car x))) local-list sep)))
     (insert str-vars)))
 
 ;; custom switch-to-buffer
@@ -359,10 +379,20 @@ tries to get the url from the current point and open it."
           (browse-url (buffer-substring-no-properties start end)))))))
 
 ;; insert date
-(defun insert-date (prefix)
-    "Insert the current date in the YYYY-MM-DD format."
+(defun insert-date (&optional prefix)
+  "Insert the current date in the YYYY-MM-DD format.
+  if *prefix* is nil insert the current data,
+  otherwise ask for a prefix via minibuffer, so the insertion will
+  results in *prefix*CURRENT_DATE.
+For example, in interactive mode:
+  ``C-u (whatever) M-x insert-date`` asks for a prefix, while
+  ``M-x insert-date`` inserts the bare current date."
     (interactive "P")
-    (insert (format-time-string "%Y-%m-%d")))
+    (insert (concat
+             (if (and prefix (called-interactively-p 'any))
+                 (read-string "prefix: ")
+               (if prefix prefix ""))
+             (format-time-string "%Y-%m-%d"))))
 
 ;; run python program
 (defun run-python-program (&optional python-name)
@@ -403,41 +433,44 @@ tries to get the url from the current point and open it."
 ;; NOTE: see above for *set-key on android, vibuf and lisp-mode
 
 ;; redefine this: change focus forward
-(global-set-key (kbd "C-c w") 'other-window)
+(global-set-key (kbd "C-c w") #'other-window)
 ;; change focus backward
-(global-set-key (kbd "C-c q") (lambda () (interactive) (other-window -1)))
+(global-set-key (kbd "C-c q") #'(lambda () (interactive) (other-window -1)))
 
 ;; change font size with C-[MouseWheelUpOrDown]
-(global-set-key (kbd "<C-mouse-4>") (lambda () (interactive) (text-scale-decrease 1)))
-(global-set-key (kbd "<C-mouse-5>") (lambda () (interactive) (text-scale-increase 1)))
+(global-set-key (kbd "<C-mouse-4>") #'(lambda () (interactive) (text-scale-decrease 1)))
+(global-set-key (kbd "<C-mouse-5>") #'(lambda () (interactive) (text-scale-increase 1)))
 
 ;; revert buffer
-(global-set-key (kbd "<f1>") (lambda () (interactive)
+(global-set-key (kbd "<f1>") #'(lambda () (interactive)
 		       (progn (revert-buffer nil t t) (message "%s" "buffer reverted"))))
 
 ;; open urls
-(global-set-key (kbd "C-c C-u") (lambda () (interactive) (open-url-from-region 1)))
+(global-set-key (kbd "C-c C-u") #'(lambda () (interactive) (open-url-from-region 1)))
 
 ;; for previously defined functions:
-(global-set-key (kbd "C-c b") 'go-buffer)
-(global-set-key (kbd "C-c g") 'go-line)
-(global-set-key (kbd "C-c C-c") 'copy-lines)
+(global-set-key (kbd "C-c b") #'go-buffer)
+(global-set-key (kbd "C-c g") #'go-line)
+(global-set-key (kbd "C-c C-c") #'copy-lines)
 ; C-c C-c for copy the current line
 ; C-u N C-c C-c to copy N lines
-(global-set-key (kbd "C-S-s") 'isearch-region)
-(global-set-key (kbd "C-c C-S") 'search-region)
-(global-set-key (kbd "C-c C-f") 'open-file-from-region)
-(global-set-key (kbd "C-c d") 'insert-date)
-(global-set-key (kbd "C-c u") 'uppercase-region)
-(global-set-key (kbd "C-c l") 'lowercase-region)
-(global-set-key (kbd "C-c c") 'cap-region)
-(global-set-key (kbd "M-u") 'uppercase-word)
-(global-set-key (kbd "M-l") 'lowercase-word)
-(global-set-key (kbd "M-s") (lambda () (interactive) (number-to-subscript)))
+(global-set-key (kbd "C-S-s") #'isearch-region)
+(global-set-key (kbd "C-c C-S") #'search-region)
+(global-set-key (kbd "C-c C-f") #'open-file-from-region)
+(global-set-key (kbd "C-c d") #'insert-date)
+(global-set-key (kbd "C-c u") #'uppercase-region)
+(global-set-key (kbd "C-c l") #'lowercase-region)
+(global-set-key (kbd "C-c c") #'cap-region)
+(global-set-key (kbd "M-u") #'uppercase-word)
+(global-set-key (kbd "M-l") #'lowercase-word)
+(global-set-key (kbd "M-s") #'(lambda () (interactive) (number-to-subscript)))
+
+(eval-when-compile
+  (require 'python))
 (with-eval-after-load 'python
-            (define-key python-mode-map (kbd "<f2>") 'run-python-program)
-            (define-key python-mode-map (kbd "<f3>") 'run-pythonXY-program)
-            (define-key python-mode-map (kbd "C-c C-SPC") 'comment-or-uncomment-region))
+            (define-key python-mode-map (kbd "<f2>") #'run-python-program)
+            (define-key python-mode-map (kbd "<f3>") #'run-pythonXY-program)
+            (define-key python-mode-map (kbd "C-c C-SPC") #'comment-or-uncomment-region))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -454,9 +487,9 @@ tries to get the url from the current point and open it."
 (setq-default scroll-preserve-screen-position t)
 
 ;; browser
-(when is_android
+(when init/sys-is-android
   (setq browse-url-browser-function 'browse-url-default-android-browser))
-(unless is_android
+(unless init/sys-is-android
   (setq-default browse-url-browser-function 'browse-url-firefox
 	      browse-url-firefox-program "firefox-esr"))
 ; should be nil by default:
@@ -483,7 +516,7 @@ tries to get the url from the current point and open it."
 ;; set color, faces and similar stuffs ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(unless is_android
+(unless init/sys-is-android
   ;; (set-background-color "#000000") ;"#333333")
   ;; (set-foreground-color "#33CC00")
   (set-face-attribute 'default t
@@ -511,7 +544,7 @@ tries to get the url from the current point and open it."
                       :background "red")
   (set-face-attribute 'diff-changed nil
                       :background "blue"))
-(eval-after-load "diff-mode" '(update-diff-colors))
+(eval-after-load 'diff-mode (update-diff-colors))
 
 ;; rust ;;
 ;;(add-to-list 'load-path "/home/crap0101/.emacs.d/rust")
