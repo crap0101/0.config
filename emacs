@@ -544,7 +544,8 @@ For example, in interactive mode:
                       :background "red")
   (set-face-attribute 'diff-changed nil
                       :background "blue"))
-(eval-after-load 'diff-mode (update-diff-colors))
+
+(eval-after-load 'diff-mode #'update-diff-colors)
 
 ;; rust ;;
 ;;(add-to-list 'load-path "/home/crap0101/.emacs.d/rust")
