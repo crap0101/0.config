@@ -63,6 +63,9 @@
     (dired "/content/storage/com.android.externalstorage.documents/primary:Documents/emacs/"))
   (global-set-key (kbd "<f5>") #'shared-folder))
 
+;; virtual keyboard, for android
+(when init/sys-is-android
+  (setq touch-screen-display-keyboard t))
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; packages / modes ;;
