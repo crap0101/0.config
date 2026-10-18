@@ -56,12 +56,16 @@
     (message (format "server started (%s)" (server-running-p))))
 
 
-;; set path to shared folder on (FUCKING) android
-(when init/sys-is-android
-  (defun shared-folder ()
-    (interactive)
-    (dired "/content/storage/com.android.externalstorage.documents/primary:Documents/emacs/"))
-  (global-set-key (kbd "<f5>") #'shared-folder))
+;; visit the shared folder
+(defun shared-folder ()
+  (interactive)
+  (when init/sys-is-gnu+linux
+    (dired (file-name-concat (expand-file-name "~") "local/share/emacs")))
+  (when init/sys-is-win
+    (dired (file-name-concat (expand-file-name "~") ".emacs.d/lisp")))
+  (when init/sys-is-android
+    (dired "/content/storage/com.android.externalstorage.documents/primary:Documents/emacs/")))
+(global-set-key (kbd "<f5>") #'shared-folder)
 
 ;; virtual keyboard, for android
 (when init/sys-is-android
@@ -75,7 +79,7 @@
 ;; vibuf: load
 ;;(when init/sys-is-android
 (when init/sys-is-gnu+linux
-  (add-to-list 'load-path "/home/crap0101/local/share/emacs"))
+  (add-to-list 'load-path (file-name-concat (expand-file-name "~") "local/share/emacs")))
 (when init/sys-is-win
   (add-to-list 'load-path (file-name-concat (expand-file-name "~") ".emacs.d/lisp")))
 
@@ -101,6 +105,9 @@
 
 
 ;; org-mode
+(defvar org-latex-compiler)
+(defvar org-latex-pdf-process)
+
 (with-eval-after-load 'org
   (declare-function org-indent-mode "org-indent" (&optional arg))
   (add-hook 'org-mode-hook
@@ -109,12 +116,14 @@
                 (display-fill-column-indicator-mode 1)
                 (refill-mode 1)
                 (org-indent-mode 1)
-                (setq org-latex-compiler "latexmk")
-                (setq org-latex-pdf-process
-                      '("%latex -pdfxe -output-directory=%o")))))
+                (with-eval-after-load 'ox-latex
+                  (setq org-latex-compiler "latexmk")
+                  (setq org-latex-pdf-process
+                        '("%latex -pdfxe -output-directory=%o"))))))
 
 
 ;; dired
+(require 'dired)
 (require 'ring)
 (defcustom dired/last-visited-len 25 "length for the custom dired ring"
   :type 'integer
