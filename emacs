@@ -470,6 +470,7 @@ For example, in interactive mode:
 (global-set-key (kbd "C-c C-S") #'search-region)
 (global-set-key (kbd "C-c C-f") #'open-file-from-region)
 (global-set-key (kbd "C-c d") #'insert-date)
+;; C-c u may not works on win11, use ESC-u instead
 (global-set-key (kbd "C-c u") #'uppercase-region)
 (global-set-key (kbd "C-c l") #'lowercase-region)
 (global-set-key (kbd "C-c c") #'cap-region)
